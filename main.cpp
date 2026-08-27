@@ -13,8 +13,8 @@ int main() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
-	int windowWidth = 800;
-	int windowHeight = 800;
+	int windowWidth{800};
+	int windowHeight{800};
 	// Create window with dimensions of (windowHeight, windowWidth) and a name
 	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "TestOpenGL", NULL, NULL);
 	// ensure valid window object
@@ -46,10 +46,10 @@ int main() {
 
 	// prepare to clear color of buffer and give it a new color
 	// Specify Color
-	float R = 0.07f;
-	float G = 0.13f;
-	float B = 0.17f;
-	float A = 1.0f;
+	float R{0.07f};
+	float G{0.13f};
+	float B{0.17f};
+	float A{1.0f};
 	// Use color for background
 	glClearColor(R, G, B, A);
 	// Clean the back buffer and assign the new color to it
