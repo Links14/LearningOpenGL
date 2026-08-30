@@ -2,18 +2,26 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"	FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
-"}\n\0";
+const char* vertexShaderSource = R"glsl(
+#version 330 core
+
+layout (location = 0) in vec3 aPos;
+
+void main()
+{
+	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+};
+)glsl";
+const char* fragmentShaderSource = R"glsl(
+#version 330 core
+
+out vec4 FragColor;
+
+void main()
+{
+	FragColor = vec4(0.7f, 0.3f, 0.02f, 1.0f);
+};
+)glsl";
 
 int main() {
 	// Initialize GLFW
@@ -27,15 +35,36 @@ int main() {
 
 	GLfloat verticies[] = 
 	{
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // lower left corner
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // lower right corner
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f // top
+		// equilateral triangle		(3, 3, 1)
+		//-0.5f, -float(sqrt(3)) / 6.0f, 0.0f, // lower left corner
+		//0.5f, -float(sqrt(3)) / 6.0f, 0.0f, // lower right corner
+		//0.0f, float(sqrt(3)) / 3.0f, 0.0f // top
+
+		// square, 2 tris			(3, 3, 2)
+		//-0.5f, -0.5f, 0.0f, // lower left corner
+		//0.5f, -0.5f, 0.0f, // lower right corner
+		//-0.5f, 0.5f, 0.0f, // upper left corner
+
+		//-0.5f, 0.5f, 0.0f, // upper left corner
+		//0.5f, 0.5f, 0.0f, // upper right corner
+		//0.5f, -0.5f, 0.0f, // lower right corner
+
+		// square-outline		(2, 4, 1)
+		0.5f, -0.5f, // lower right corner
+		-0.5f, -0.5f, // lower left corner
+		-0.5f, 0.5f, // upper left corner
+		0.5f, 0.5f // upper right corner
 	};
+	// shape rendering parameters
+	int vertPerPt = 2;
+	int ptsPerShape = 4;
+	int polygons = 1;
 
 	// create window
-	int windowWidth{800};
-	int windowHeight{800};
-	const char windowName[]{"OpenGL Test"};
+	int windowWidth {800};
+	int windowHeight {800};
+	int asdad {1};
+	const char windowName[] {"OpenGL Test"};
 	// Create window with dimensions of (windowHeight, windowWidth) and a name
 	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowName, NULL, NULL);
 	// ensure valid window object
@@ -83,16 +112,20 @@ int main() {
 	glDeleteShader(fragmentShader);
 
 	// Create reference containers for the Vertex Array Object and the Vertex Buffer Object
-	GLuint VAO, VBO;
+	//GLuint VAO, VBO;
+	GLuint VAOs[1], VBOs[1];
 
 	// Generate the VAO and BVO with only 1 object each - VAO must be made first
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
+	//glGenVertexArrays(1, &VAO);
+	//glGenBuffers(1, &VBO);
+
+	glGenVertexArrays(1, VAOs);
+	glGenBuffers(1, VBOs);
 
 	// Make the VAO the current Vertex Array Object by binding it
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAOs[0]);
 	// Bind the VBO specifying its a GL_ARRAY_BUFFER
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
 
 	/*
 	* GLenum is GL_STATIC_DRAW
@@ -109,7 +142,7 @@ int main() {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
 
 	// Configure the Vertex Attribute so that OpenGL knows how to read the VBO
-	glVertexAttribPointer(0, 3 , GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, vertPerPt, GL_FLOAT, GL_FALSE, vertPerPt * sizeof(float), (void*)0);
 	// Enable the Vertex Attribute so that OpenGL knows how to use it
 	glEnableVertexAttribArray(0);
 
@@ -149,17 +182,19 @@ int main() {
 		// Tell OpenGL which shader program we want to use
 		glUseProgram(shaderProgram);
 		// Bind the VAO so OpenGL knows to use it
-		glBindVertexArray(VAO);
+		glBindVertexArray(VAOs[0]);
 		// Draw the triangle using the GL_TRIANGLES primitive
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawArrays(GL_TRIANGLES, 0, vertCount * trisCount);
+		glDrawArrays(GL_LINE_LOOP, 0, ptsPerShape * polygons);
+		// Updates frames
 		glfwSwapBuffers(window);
 
 		// process events
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, VAOs);
+	glDeleteBuffers(1, VBOs);
 	glDeleteProgram(shaderProgram);
 
 	// Delete and terminate window
