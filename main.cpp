@@ -2,29 +2,63 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-const char* vertexShaderSource = R"glsl(
-#version 330 core
+#include "shaderClass.h"
+#include "VAO.h"
+#include "VBO.h"
+#include "EBO.h"
 
-layout (location = 0) in vec3 aPos;
-
-void main()
+GLfloat vertices[] =
 {
-	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+	// equilateral triangle		(3, 3, 1)
+	//-0.5f, -float(sqrt(3)) / 6.0f, 0.0f, // lower left corner
+	//0.5f, -float(sqrt(3)) / 6.0f, 0.0f, // lower right corner
+	//0.0f, float(sqrt(3)) / 3.0f, 0.0f // top
+
+	// square, 2 tris			(3, 3, 2)
+	//-0.5f, -0.5f, 0.0f, // lower left corner
+	//0.5f, -0.5f, 0.0f, // lower right corner
+	//-0.5f, 0.5f, 0.0f, // upper left corner
+
+	//-0.5f, 0.5f, 0.0f, // upper left corner
+	//0.5f, 0.5f, 0.0f, // upper right corner
+	//0.5f, -0.5f, 0.0f, // lower right corner
+
+	// square-outline		(2, 4, 1)
+	//0.5f, -0.5f, // lower right corner
+	//-0.5f, -0.5f, // lower left corner
+	//-0.5f, 0.5f, // upper left corner
+	//0.5f, 0.5f // upper right corner
+
+	// triforce
+	-0.5f, -float(sqrt(3)) / 6, 0.0f, // lower left corner
+	0.5f, -float(sqrt(3)) / 6, 0.0f, // lower right corner
+	0.0f, float(sqrt(3)) / 3, 0.0f, // upper corner
+	-0.25f, float(sqrt(3)) / 12, 0.0f, // Inner Left
+	0.25f, float(sqrt(3)) / 12, 0.0f, // Inner Right
+	0.0f, -float(sqrt(3)) / 6, 0.0f // Inner down
 };
-)glsl";
-const char* fragmentShaderSource = R"glsl(
-#version 330 core
 
-out vec4 FragColor;
+GLuint indices[] = {
+	0, 3, 5,	// lower left triangle
+	3, 2, 4,	// lower right triangle
+	5, 4, 1		// Upper triangle
+};
 
-void main()
+// shape rendering parameters
+int vertPerPt = 3;
+int ptsPerPolygon = 3;
+int polygons = 3;
+
+// create window
+int windowWidth{800};
+int windowHeight{800};
+int asdad{1};
+const char windowName[]{"OpenGL Test"};
+
+
+int main()
 {
-	FragColor = vec4(0.7f, 0.3f, 0.02f, 1.0f);
-};
-)glsl";
-
-int main() {
-	// Initialize GLFW
+// Initialize GLFW
 	glfwInit();
 
 	// inform opengl of target version (vMAJOR,MINOR = v3.3)
@@ -33,42 +67,12 @@ int main() {
 	// Use CORE profiler rather than COMPATABILITY, CORE drops the outdated functions present in COMPATABILITY
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLfloat verticies[] = 
-	{
-		// equilateral triangle		(3, 3, 1)
-		//-0.5f, -float(sqrt(3)) / 6.0f, 0.0f, // lower left corner
-		//0.5f, -float(sqrt(3)) / 6.0f, 0.0f, // lower right corner
-		//0.0f, float(sqrt(3)) / 3.0f, 0.0f // top
 
-		// square, 2 tris			(3, 3, 2)
-		//-0.5f, -0.5f, 0.0f, // lower left corner
-		//0.5f, -0.5f, 0.0f, // lower right corner
-		//-0.5f, 0.5f, 0.0f, // upper left corner
-
-		//-0.5f, 0.5f, 0.0f, // upper left corner
-		//0.5f, 0.5f, 0.0f, // upper right corner
-		//0.5f, -0.5f, 0.0f, // lower right corner
-
-		// square-outline		(2, 4, 1)
-		0.5f, -0.5f, // lower right corner
-		-0.5f, -0.5f, // lower left corner
-		-0.5f, 0.5f, // upper left corner
-		0.5f, 0.5f // upper right corner
-	};
-	// shape rendering parameters
-	int vertPerPt = 2;
-	int ptsPerShape = 4;
-	int polygons = 1;
-
-	// create window
-	int windowWidth {800};
-	int windowHeight {800};
-	int asdad {1};
-	const char windowName[] {"OpenGL Test"};
 	// Create window with dimensions of (windowHeight, windowWidth) and a name
 	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowName, NULL, NULL);
 	// ensure valid window object
-	if (window == NULL) {
+	if (window == NULL)
+	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
@@ -84,72 +88,23 @@ int main() {
 	// Origin at (0,0) in the bottom left to (windowWidth, windowHeight) in the top right corner
 	glViewport(0, 0, windowWidth, windowHeight);
 
-	// Create vertex shader and get its reference
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	// Attach vertex shader source to the vertex shader object
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	// Compile the vertex shader into machine code
-	glCompileShader(vertexShader);
+	// creates shader object using shaders default.vert and default.frag
+	Shader shaderProgram {"default.vert", "default.frag"};
 
-	// Create fragment shader object and get its reference
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	// Attach fragment shader source to the fragment shader object
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	// Compile the vertex shader into machine code
-	glCompileShader(fragmentShader);
+	// create and bind a Vertex Array Object
+	VAO VAO1;
+	VAO1.Bind();
 
-	// Create shader program object and get its reference
-	GLuint shaderProgram = glCreateProgram();
+	// Create and Initialize Vertex Buffer Object and Element Array Buffer Object
+	VBO VBO1{vertices, sizeof(vertices)};	// linked to vertices
+	EBO EBO1{indices, sizeof(indices)};		// linked to indices
 
-	// Attach the vertex and fragment shaders to the shader program
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	// Wrap-up/Link all the sahder together in the shaderProgram
-	glLinkProgram(shaderProgram);
-
-	// Delete the shaders that are no longer needed
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	// Create reference containers for the Vertex Array Object and the Vertex Buffer Object
-	//GLuint VAO, VBO;
-	GLuint VAOs[1], VBOs[1];
-
-	// Generate the VAO and BVO with only 1 object each - VAO must be made first
-	//glGenVertexArrays(1, &VAO);
-	//glGenBuffers(1, &VBO);
-
-	glGenVertexArrays(1, VAOs);
-	glGenBuffers(1, VBOs);
-
-	// Make the VAO the current Vertex Array Object by binding it
-	glBindVertexArray(VAOs[0]);
-	// Bind the VBO specifying its a GL_ARRAY_BUFFER
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-
-	/*
-	* GLenum is GL_STATIC_DRAW
-	*	- STREAM is used for when the verticies are modified once and used a few times
-	*	- STATIC is used for when the verticies are modified once and used many times
-	*	- DYNAMIC is used for when the verticies are modified once and use many times
-	*	knowing these is useful for optimization
-	*	DRAW is used to draw to the screen
-	*	READ reads the info
-	*	COPY copies it
-	*/
-
-	// Introduce the verticies in to the VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
-
-	// Configure the Vertex Attribute so that OpenGL knows how to read the VBO
-	glVertexAttribPointer(0, vertPerPt, GL_FLOAT, GL_FALSE, vertPerPt * sizeof(float), (void*)0);
-	// Enable the Vertex Attribute so that OpenGL knows how to use it
-	glEnableVertexAttribArray(0);
-
-	// Bind both VBO and VAO to 0 so that we dont accidentally modify the VAO and VBO we created
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
+	// Link the VBO to the VAO
+	VAO1.LinkVBO(VBO1, 0);
+	// unbind to prevent accidental modification
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
 
 	/*
 	* NOTE: 
@@ -180,12 +135,13 @@ int main() {
 		// Clean the back buffer and assign the new color to it
 		glClear(GL_COLOR_BUFFER_BIT);
 		// Tell OpenGL which shader program we want to use
-		glUseProgram(shaderProgram);
+		shaderProgram.Activate();
 		// Bind the VAO so OpenGL knows to use it
-		glBindVertexArray(VAOs[0]);
+		VAO1.Bind();
 		// Draw the triangle using the GL_TRIANGLES primitive
-		//glDrawArrays(GL_TRIANGLES, 0, vertCount * trisCount);
-		glDrawArrays(GL_LINE_LOOP, 0, ptsPerShape * polygons);
+		//glDrawArrays(GL_TRIANGLES, 0, vertPerPt * polygons);
+		//glDrawArrays(GL_LINE_LOOP, 0, ptsPerShape * polygons);
+		glDrawElements(GL_TRIANGLES, vertPerPt * polygons, GL_UNSIGNED_INT, 0);
 		// Updates frames
 		glfwSwapBuffers(window);
 
@@ -193,9 +149,10 @@ int main() {
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, VAOs);
-	glDeleteBuffers(1, VBOs);
-	glDeleteProgram(shaderProgram);
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	shaderProgram.Delete();
 
 	// Delete and terminate window
 	glfwDestroyWindow(window);
