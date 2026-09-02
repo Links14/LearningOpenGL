@@ -38,7 +38,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="FragmentShader.glsl" />
     <None Include="default.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>

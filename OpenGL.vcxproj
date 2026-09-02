@@ -77,8 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
-    <IncludePath>D:\VS-Projects\OpenGL\Libraries\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\VS-Projects\OpenGL\Libraries\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Projects\LearningOpenGL\Libraries\include;D:\VS-Projects\OpenGL\Libraries\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Projects\LearningOpenGL\Libraries\lib;D:\VS-Projects\OpenGL\Libraries\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -145,7 +145,6 @@
   <ItemGroup>
     <None Include="default.frag" />
     <None Include="default.vert" />
-    <None Include="FragmentShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h" />

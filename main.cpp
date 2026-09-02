@@ -30,14 +30,15 @@ GLfloat vertices[] =
 	//0.5f, 0.5f // upper right corner
 
 	// triforce
-	-0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.8f, 0.3f,  0.02f,		// lower left corner
-	0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.8f, 0.3f,  0.02f, 	// lower right corner
-	0.0f,	 float(sqrt(3)) / 3,	0.0f,	1.0f, 0.6f,  0.32f, 	// upper corner
-	-0.25f,	 float(sqrt(3)) / 12,	0.0f,	0.9f, 0.45f, 0.17f, 	// Inner Left
-	0.25f,	 float(sqrt(3)) / 12,	0.0f,	0.9f, 0.45f, 0.17f, 	// Inner Right
-	0.0f,	-float(sqrt(3)) / 6,	0.0f,	0.8f, 0.3f,  0.02f 		// Inner down
+	-0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 0.0f, 1.0f, // Blue		// Lower Left
+	0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 0.0f, // Green		// Lower Right
+	0.0f,	 float(sqrt(3)) / 3,	0.0f,	1.0f, 0.0f, 0.0f, // Red		// Top Middle
+	-0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 0.0f, 1.0f, // Magenta	// Middle Left
+	0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 1.0f, 0.0f, // Yellow		// Middle Right
+	0.0f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 1.0f  // LightBlue	// Bottom Middle
 };
 
+// clockwise winding order
 GLuint indices[] = {
 	0, 3, 5,	// lower left triangle
 	3, 2, 4,	// lower right triangle
