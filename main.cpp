@@ -1,8 +1,10 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <stb/stb_image.h>
 
 #include "shaderClass.h"
+#include "Texture.h"
 #include "VAO.h"
 #include "VBO.h"
 #include "EBO.h"
@@ -23,32 +25,38 @@ GLfloat vertices[] =
 	//0.5f, 0.5f, 0.0f, // upper right corner
 	//0.5f, -0.5f, 0.0f, // lower right corner
 
-	// square-outline		(2, 4, 1)
-	//0.5f, -0.5f, // lower right corner
-	//-0.5f, -0.5f, // lower left corner
-	//-0.5f, 0.5f, // upper left corner
-	//0.5f, 0.5f // upper right corner
+	// square
+	// vertices				// colors			// tex coords
+	-0.5f,	-0.5f,	0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, // Lower Left corner
+	-0.5f,	0.5f,	0.0f,	0.0f, 1.0f, 0.0f,	0.0f, 1.0f, // Upper Left corner
+	0.5f,	0.5f,	0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f, // Upper Right corner
+	0.5f,	-0.5f,	0.0f,	1.0f, 1.0f, 1.0f, 	1.0f, 0.0f // Lower Right corner
 
 	// triforce
-	-0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 0.0f, 1.0f, // Blue		// Lower Left
-	0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 0.0f, // Green		// Lower Right
-	0.0f,	 float(sqrt(3)) / 3,	0.0f,	1.0f, 0.0f, 0.0f, // Red		// Top Middle
-	-0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 0.0f, 1.0f, // Magenta	// Middle Left
-	0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 1.0f, 0.0f, // Yellow		// Middle Right
-	0.0f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 1.0f  // LightBlue	// Bottom Middle
+	//-0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 0.0f, 1.0f, // Blue		// Lower Left
+	//0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 0.0f, // Green		// Lower Right
+	//0.0f,	 float(sqrt(3)) / 3,	0.0f,	1.0f, 0.0f, 0.0f, // Red		// Top Middle
+	//-0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 0.0f, 1.0f, // Magenta	// Middle Left
+	//0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 1.0f, 0.0f, // Yellow		// Middle Right
+	//0.0f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 1.0f  // LightBlue	// Bottom Middle
 };
 
 // clockwise winding order
 GLuint indices[] = {
-	0, 3, 5,	// lower left triangle
-	3, 2, 4,	// lower right triangle
-	5, 4, 1		// Upper triangle
+	// triforce
+	//0, 3, 5,	// lower left triangle
+	//3, 2, 4,	// lower right triangle
+	//5, 4, 1		// Upper triangle
+
+	// square
+	0, 2, 1,
+	0, 3, 2
 };
 
 // shape rendering parameters
 int vertPerPt = 3;
 int ptsPerPolygon = 3;
-int polygons = 3;
+int polygons = 2;
 
 // create window
 int windowWidth{800};
@@ -101,8 +109,9 @@ int main()
 	EBO EBO1{indices, sizeof(indices)};		// linked to indices
 
 	// Links VBO attributes such as coordinates and colors to VAO
-	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
-	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	// unbind to prevent accidental modification
 	VAO1.Unbind();
 	VBO1.Unbind();
@@ -121,6 +130,12 @@ int main()
 	// Get ID of uniform called "scale"
 	GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
 
+	// Texture
+	// create sun texture
+	Texture sun{"sun.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, STBI_rgb_alpha};
+	// create and bind uniform texture to shader
+	sun.texUnit(shaderProgram, "tex0", 0);
+
 	// prepare to clear color of buffer and give it a new color
 	// Specify Color
 	float R{0.07f};
@@ -130,7 +145,6 @@ int main()
 
 	// swap the back buffer with the front buffer
 	glfwSwapBuffers(window);
-
 
 	// only close on valid close case
 	while (!glfwWindowShouldClose(window))
@@ -143,6 +157,7 @@ int main()
 		shaderProgram.Activate();
 		// Assigns a value to the uniform; NOTE: Must always be done after activatin the Shader Program
 		glUniform1f(uniID, 0.5f);
+		sun.Bind();
 		// Bind the VAO so OpenGL knows to use it
 		VAO1.Bind();
 		// Draw the triangle using the GL_TRIANGLES primitive
@@ -159,6 +174,7 @@ int main()
 	VAO1.Delete();
 	VBO1.Delete();
 	EBO1.Delete();
+	sun.Delete();
 	shaderProgram.Delete();
 
 	// Delete and terminate window
