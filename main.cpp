@@ -146,6 +146,9 @@ int main()
 	// swap the back buffer with the front buffer
 	glfwSwapBuffers(window);
 
+	/*float lastTime{0.0f};
+	float scale{0.0f};*/
+
 	// only close on valid close case
 	while (!glfwWindowShouldClose(window))
 	{
@@ -155,8 +158,14 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		// Tell OpenGL which shader program we want to use
 		shaderProgram.Activate();
+		/*float thisTime = glfwGetTime();
+		if (thisTime - lastTime > 1.0f / 60.0f) {
+			lastTime = thisTime;
+			scale += 0.05f;
+		}*/
 		// Assigns a value to the uniform; NOTE: Must always be done after activatin the Shader Program
 		glUniform1f(uniID, 0.5f);
+		//glUniform1f(uniID, 0.5f * sin(scale));
 		sun.Bind();
 		// Bind the VAO so OpenGL knows to use it
 		VAO1.Bind();
