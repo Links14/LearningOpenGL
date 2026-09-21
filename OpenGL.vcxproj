@@ -158,6 +158,7 @@
     <ClInclude Include="shaderClass.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="C:\Users\funyb\Downloads\lava.png" />
     <Image Include="sun.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

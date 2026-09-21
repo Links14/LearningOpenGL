@@ -2,6 +2,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "shaderClass.h"
 #include "Texture.h"
@@ -27,10 +30,10 @@ GLfloat vertices[] =
 
 	// square
 	// vertices				// colors			// tex coords
-	-0.5f,	-0.5f,	0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, // Lower Left corner
-	-0.5f,	0.5f,	0.0f,	0.0f, 1.0f, 0.0f,	0.0f, 1.0f, // Upper Left corner
-	0.5f,	0.5f,	0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f, // Upper Right corner
-	0.5f,	-0.5f,	0.0f,	1.0f, 1.0f, 1.0f, 	1.0f, 0.0f // Lower Right corner
+	//-0.5f,	-0.5f,	0.0f,	1.0f, 0.0f, 0.0f,	0.0f, 0.0f, // Lower Left corner
+	//-0.5f,	0.5f,	0.0f,	0.0f, 1.0f, 0.0f,	0.0f, 1.0f, // Upper Left corner
+	//0.5f,	0.5f,	0.0f,	0.0f, 0.0f, 1.0f,	1.0f, 1.0f, // Upper Right corner
+	//0.5f,	-0.5f,	0.0f,	1.0f, 1.0f, 1.0f, 	1.0f, 0.0f // Lower Right corner
 
 	// triforce
 	//-0.5f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 0.0f, 1.0f, // Blue		// Lower Left
@@ -39,6 +42,16 @@ GLfloat vertices[] =
 	//-0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 0.0f, 1.0f, // Magenta	// Middle Left
 	//0.25f,	 float(sqrt(3)) / 12,	0.0f,	1.0f, 1.0f, 0.0f, // Yellow		// Middle Right
 	//0.0f,	-float(sqrt(3)) / 6,	0.0f,	0.0f, 1.0f, 1.0f  // LightBlue	// Bottom Middle
+
+
+	// 3D pyramid
+//	COORDINATES			/		COLORS			/	TEX COORDS
+	-0.5f, 0.0f,  0.5f,		0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
+	-0.5f, 0.0f, -0.5f,		0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
+	 0.5f, 0.0f, -0.5f, 	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
+	 0.5f, 0.0f,  0.5f,		0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
+	 0.0f, 0.8f,  0.0f,		0.92f, 0.86f, 0.76f,	2.5f, 5.0f
+
 };
 
 // clockwise winding order
@@ -49,21 +62,21 @@ GLuint indices[] = {
 	//5, 4, 1		// Upper triangle
 
 	// square
-	0, 2, 1,
-	0, 3, 2
+	//0, 2, 1,
+	//0, 3, 2
+
+	0, 1, 2,
+	0, 2, 3,
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+	3, 0, 4
 };
 
-// shape rendering parameters
-int vertPerPt = 3;
-int ptsPerPolygon = 3;
-int polygons = 2;
-
 // create window
-int windowWidth{800};
-int windowHeight{800};
-int asdad{1};
+const unsigned int windowWidth{800};
+const unsigned int windowHeight{800};
 const char windowName[]{"OpenGL Test"};
-
 
 int main()
 {
@@ -132,7 +145,7 @@ int main()
 
 	// Texture
 	// create sun texture
-	Texture sun{"sun.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, STBI_rgb_alpha};
+	Texture sun{"lava.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, STBI_rgb_alpha};
 	// create and bind uniform texture to shader
 	sun.texUnit(shaderProgram, "tex0", 0);
 
@@ -149,13 +162,21 @@ int main()
 	/*float lastTime{0.0f};
 	float scale{0.0f};*/
 
+	// rotation angle in degrees
+	float rotation{0.0f};
+	double prevTime{glfwGetTime()};
+
+	// Enable depth testing
+	glEnable(GL_DEPTH_TEST);
+
 	// only close on valid close case
 	while (!glfwWindowShouldClose(window))
 	{
 		// Use color for background
 		glClearColor(R, G, B, A);
 		// Clean the back buffer and assign the new color to it
-		glClear(GL_COLOR_BUFFER_BIT);
+		// Clear the color and depth buffers
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// Tell OpenGL which shader program we want to use
 		shaderProgram.Activate();
 		/*float thisTime = glfwGetTime();
@@ -163,6 +184,32 @@ int main()
 			lastTime = thisTime;
 			scale += 0.05f;
 		}*/
+
+		// Update rotation based on time
+		double currTime{glfwGetTime()};
+		if (currTime - prevTime > 1.0f / 60.0f) {
+			prevTime = currTime;
+			rotation += 0.5f;
+		}
+		
+		// Create transformations
+		glm::mat4 model{glm::mat4(1.0f)};
+		glm::mat4 view{glm::mat4(1.0f)};
+		glm::mat4 projection{glm::mat4(1.0f)};
+
+		// Rotate the model matrix around the Y-axis by the rotation angle
+		model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
+		projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+
+		// Inputs matrices into the Vertex Shader
+		int modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		int viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		int projectionLoc = glGetUniformLocation(shaderProgram.ID, "projection");
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
 		// Assigns a value to the uniform; NOTE: Must always be done after activatin the Shader Program
 		glUniform1f(uniID, 0.5f);
 		//glUniform1f(uniID, 0.5f * sin(scale));
@@ -172,7 +219,7 @@ int main()
 		// Draw the triangle using the GL_TRIANGLES primitive
 		//glDrawArrays(GL_TRIANGLES, 0, vertPerPt * polygons);
 		//glDrawArrays(GL_LINE_LOOP, 0, ptsPerShape * polygons);
-		glDrawElements(GL_TRIANGLES, vertPerPt * polygons, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
 		// Updates frames
 		glfwSwapBuffers(window);
 
