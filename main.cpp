@@ -11,6 +11,7 @@
 #include "VAO.h"
 #include "VBO.h"
 #include "EBO.h"
+#include "Camera.h"
 
 GLfloat vertices[] =
 {
@@ -140,14 +141,11 @@ int main()
 	* The frame where data is being written is called the back buffer
 	*/
 
-	// Get ID of uniform called "scale"
-	GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-
 	// Texture
 	// create sun texture
-	Texture sun{"lava.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, STBI_rgb_alpha};
+	Texture text{"lava.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE, STBI_rgb_alpha};
 	// create and bind uniform texture to shader
-	sun.texUnit(shaderProgram, "tex0", 0);
+	text.texUnit(shaderProgram, "tex0", 0);
 
 	// prepare to clear color of buffer and give it a new color
 	// Specify Color
@@ -159,15 +157,12 @@ int main()
 	// swap the back buffer with the front buffer
 	glfwSwapBuffers(window);
 
-	/*float lastTime{0.0f};
-	float scale{0.0f};*/
-
-	// rotation angle in degrees
-	float rotation{0.0f};
-	double prevTime{glfwGetTime()};
-
 	// Enable depth testing
 	glEnable(GL_DEPTH_TEST);
+
+
+	Camera camera{windowWidth, windowHeight, glm::vec3{0.0f, 0.0f, 2.0f}};
+
 
 	// only close on valid close case
 	while (!glfwWindowShouldClose(window))
@@ -179,41 +174,12 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// Tell OpenGL which shader program we want to use
 		shaderProgram.Activate();
-		/*float thisTime = glfwGetTime();
-		if (thisTime - lastTime > 1.0f / 60.0f) {
-			lastTime = thisTime;
-			scale += 0.05f;
-		}*/
 
-		// Update rotation based on time
-		double currTime{glfwGetTime()};
-		if (currTime - prevTime > 1.0f / 60.0f) {
-			prevTime = currTime;
-			rotation += 0.5f;
-		}
-		
-		// Create transformations
-		glm::mat4 model{glm::mat4(1.0f)};
-		glm::mat4 view{glm::mat4(1.0f)};
-		glm::mat4 projection{glm::mat4(1.0f)};
-
-		// Rotate the model matrix around the Y-axis by the rotation angle
-		model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-		view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
-		projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
-
-		// Inputs matrices into the Vertex Shader
-		int modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		int viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		int projectionLoc = glGetUniformLocation(shaderProgram.ID, "projection");
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		camera.Inputs(window);
+		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
 
 		// Assigns a value to the uniform; NOTE: Must always be done after activatin the Shader Program
-		glUniform1f(uniID, 0.5f);
-		//glUniform1f(uniID, 0.5f * sin(scale));
-		sun.Bind();
+		text.Bind();
 		// Bind the VAO so OpenGL knows to use it
 		VAO1.Bind();
 		// Draw the triangle using the GL_TRIANGLES primitive
@@ -230,7 +196,7 @@ int main()
 	VAO1.Delete();
 	VBO1.Delete();
 	EBO1.Delete();
-	sun.Delete();
+	text.Delete();
 	shaderProgram.Delete();
 
 	// Delete and terminate window
