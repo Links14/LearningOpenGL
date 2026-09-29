@@ -80,9 +80,12 @@ GLuint indices[] = {
 };
 
 // create window
-const unsigned int windowWidth{800};
-const unsigned int windowHeight{800};
+int windowWidth{800};
+int windowHeight{800};
 const char windowName[]{"OpenGL Test"};
+
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main()
 {
@@ -97,9 +100,9 @@ int main()
 
 
 	// Create window with dimensions of (windowHeight, windowWidth) and a name
-	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowName, NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowName, nullptr, nullptr);
 	// ensure valid window object
-	if (window == NULL)
+	if (window == nullptr)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -109,12 +112,19 @@ int main()
 	// Add window to active context
 	glfwMakeContextCurrent(window);
 
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 	// Load GLAD to configure openGL
-	gladLoadGL();
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
 
 	// Render the full window
 	// Origin at (0,0) in the bottom left to (windowWidth, windowHeight) in the top right corner
 	glViewport(0, 0, windowWidth, windowHeight);
+
 
 	// creates shader object using shaders default.vert and default.frag
 	Shader shaderProgram {"default.vert", "default.frag"};
@@ -181,6 +191,7 @@ int main()
 		shaderProgram.Activate();
 
 		camera.Inputs(window);
+		camera.UpdateWindowSize(windowWidth, windowHeight);
 		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
 
 		// Assigns a value to the uniform; NOTE: Must always be done after activatin the Shader Program
@@ -209,4 +220,14 @@ int main()
 	glfwTerminate();
 
 	return 0;
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// update window sizes
+	windowWidth = width;
+	windowHeight = height;
+
+	// set the viewport to the new window dimensions
+	glViewport(0, 0, width, height);
 }
